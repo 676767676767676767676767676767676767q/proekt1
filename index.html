@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тест на зависимость от соцсетей (30 вопросов)</title>
+
+<style>
+:root {
+    --primary: #4a90e2;
+    --primary-dark: #357abd;
+    --bg: #f4f6f9;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: white;
+    width: 100%;
+    max-width: 550px;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.quiz-content {
+    transition: all 0.4s ease-in-out;
+}
+
+.fade-out {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+
+.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.progress-bar {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary);
+    transition: width 0.4s ease;
+}
+
+.timers {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.question {
+    font-size: 18px;
+    font-weight: 600;
+    min-height: 50px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    margin: 6px 0;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary);
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.btn:hover {
+    background: var(--primary-dark);
+    transform: translateX(8px);
+}
+
+.result-box {
+    padding: 18px;
+    border-radius: 12px;
+    margin-top: 15px;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+.low { background: #d4edda; color: #155724; }
+.mild { background: #d1ecf1; color: #0c5460; }
+.medium { background: #fff3cd; color: #856404; }
+.high { background: #f8d7da; color: #721c24; }
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div id="quiz">
+        <div class="timers">
+            <span id="totalTimeDisplay">Всего: 00:00</span>
+            <span id="questionTimerDisplay">Вопрос 1/30</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <div id="quizContent" class="quiz-content">
+            <div id="questionText" class="question"></div>
+            <div id="answers"></div>
+        </div>
+    </div>
+
+    <div id="result" class="hidden">
+        <h2>Результат теста</h2>
+        <p id="scoreText" style="font-size: 18px; font-weight: bold;"></p>
+        <p id="totalTimeResult" style="color: #666; font-size: 14px; margin-bottom: 10px;"></p>
+        <div id="interpretation" class="result-box"></div>
+        <button class="btn" style="margin-top: 20px; text-align: center;" onclick="restart()">Пройти заново</button>
+    </div>
+</div>
+
+<script>
+const questions = [
+    { text: "Сколько времени в день вы проводите в социальных сетях?", answers: [{ text: "Менее 1 часа", score: 0 }, { text: "1–3 часа", score: 1 }, { text: "Более 3 часов", score: 2 }] },
+    { text: "Проверяете ли вы соцсети сразу после пробуждения?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Каждый день", score: 2 }] },
+    { text: "Чувствуете ли вы тревогу, если нет доступа к интернету?", answers: [{ text: "Нет", score: 0 }, { text: "Немного", score: 1 }, { text: "Да, сильно", score: 2 }] },
+    { text: "Отвлекают ли соцсети вас от учёбы?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Да, часто", score: 2 }] },
+    { text: "Скрываете ли вы время в сети от родителей?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Да", score: 2 }] },
+    { text: "Пытались ли вы сократить время в соцсетях безрезультатно?", answers: [{ text: "Не пробовал(а)", score: 0 }, { text: "Пытался(ась)", score: 1 }, { text: "Да, безуспешно", score: 2 }] },
+    { text: "Заменяют ли соцсети вам живое общение?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Да", score: 2 }] },
+    { text: "Часто ли вы думаете о лайках и комментариях?", answers: [{ text: "Редко", score: 0 }, { text: "Иногда", score: 1 }, { text: "Постоянно", score: 2 }] },
+    { text: "Влияет ли использование соцсетей на ваш сон?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Регулярно", score: 2 }] },
+    { text: "Злитесь ли вы, если вас просят отложить телефон?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Да", score: 2 }] },
+    { text: "Едите ли вы, пролистывая ленту новостей?", answers: [{ text: "Никогда", score: 0 }, { text: "Иногда", score: 1 }, { text: "Всегда", score: 2 }] },
+    { text: "Сравниваете ли вы свою жизнь с фото других людей?", answers: [{ text: "Нет", score: 0 }, { text: "Бывает", score: 1 }, { text: "Да, постоянно", score: 2 }] },
+    { text: "Забрасываете ли вы хобби ради интернета?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Да", score: 2 }] },
+    { text: "Боитесь ли вы пропустить что-то важное онлайн (FOMO)?", answers: [{ text: "Нет", score: 0 }, { text: "Немного", score: 1 }, { text: "Да, очень", score: 2 }] },
+    { text: "Снимаете ли вы видео вместо того, чтобы наслаждаться моментом?", answers: [{ text: "Редко", score: 0 }, { text: "Иногда", score: 1 }, { text: "Да", score: 2 }] },
+    // Новые 15 вопросов
+    { text: "Проверяете ли вы уведомления во время разговора с друзьями?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Постоянно", score: 2 }] },
+    { text: "Чувствуете ли вы фантомные вибрации телефона в кармане?", answers: [{ text: "Никогда", score: 0 }, { text: "Редко", score: 1 }, { text: "Часто", score: 2 }] },
+    { text: "Заходите ли вы в соцсети просто от скуки?", answers: [{ text: "Редко", score: 0 }, { text: "Иногда", score: 1 }, { text: "Постоянно", score: 2 }] },
+    { text: "Вам проще написать сообщение, чем позвонить?", answers: [{ text: "Нет", score: 0 }, { text: "Пожалуй", score: 1 }, { text: "Да, намного", score: 2 }] },
+    { text: "Пользуетесь ли вы телефоном на ходу или переходя дорогу?", answers: [{ text: "Никогда", score: 0 }, { text: "Иногда", score: 1 }, { text: "Часто", score: 2 }] },
+    { text: "Проводите ли вы в сети больше времени, чем планировали?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Всегда", score: 2 }] },
+    { text: "Стало ли вам труднее читать длинные книги или смотреть длинные фильмы?", answers: [{ text: "Нет", score: 0 }, { text: "Немного", score: 1 }, { text: "Да, трудно", score: 2 }] },
+    { text: "Используете ли вы соцсети, чтобы убежать от проблем?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Да", score: 2 }] },
+    { text: "Оправдываете ли вы свое время в сети («я там по делу»)?", answers: [{ text: "Нет", score: 0 }, { text: "Бывает", score: 1 }, { text: "Да, постоянно", score: 2 }] },
+    { text: "Проверяете ли вы телефон, если проснулись среди ночи?", answers: [{ text: "Никогда", score: 0 }, { text: "Редко", score: 1 }, { text: "Всегда", score: 2 }] },
+    { text: "Чувствуете ли вы, что событие 'не считается', если его не выложить?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Да", score: 2 }] },
+    { text: "Зависит ли ваше настроение от количества лайков сегодня?", answers: [{ text: "Никак", score: 0 }, { text: "Немного", score: 1 }, { text: "Сильно", score: 2 }] },
+    { text: "Берете ли вы телефон с собой в туалет или ванную?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Всегда", score: 2 }] },
+    { text: "Чувствуете ли вы себя изгоем, если не знаете о новом меме?", answers: [{ text: "Нет", score: 0 }, { text: "Немного", score: 1 }, { text: "Да", score: 2 }] },
+    { text: "Перелистываете ли вы ленту по кругу, когда контент закончился?", answers: [{ text: "Нет", score: 0 }, { text: "Иногда", score: 1 }, { text: "Да, часто", score: 2 }] }
+];
+
+let current = 0, score = 0, locked = false;
+let totalSeconds = 0;
+let totalTimer;
+
+const qText = document.getElementById("questionText");
+const ansDiv = document.getElementById("answers");
+const pFill = document.getElementById("progress");
+const qContent = document.getElementById("quizContent");
+
+function startTimers() {
+    totalTimer = setInterval(() => {
+        totalSeconds++;
+        let m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+        let s = (totalSeconds % 60).toString().padStart(2, '0');
+        document.getElementById("totalTimeDisplay").textContent = `Всего: ${m}:${s}`;
+    }, 1000);
+}
+
+function loadQuestion() {
+    locked = false;
+    const q = questions[current];
+    document.getElementById("questionTimerDisplay").textContent = `Вопрос ${current + 1}/30`;
+    
+    qContent.classList.remove("fade-out");
+    qContent.classList.add("fade-in");
+
+    qText.textContent = q.text;
+    ansDiv.innerHTML = "";
+
+    q.answers.forEach(a => {
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = a.text;
+        btn.onclick = () => next(a.score);
+        ansDiv.appendChild(btn);
+    });
+
+    pFill.style.width = (current / questions.length) * 100 + "%";
+}
+
+function next(val) {
+    if (locked) return;
+    locked = true;
+    score += val;
+
+    qContent.classList.add("fade-out");
+
+    setTimeout(() => {
+        current++;
+        if (current < questions.length) {
+            loadQuestion();
+        } else {
+            showResult();
+        }
+    }, 300);
+}
+
+function showResult() {
+    clearInterval(totalTimer);
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+
+    let m = Math.floor(totalSeconds / 60);
+    let s = totalSeconds % 60;
+    document.getElementById("totalTimeResult").textContent = `Время прохождения: ${m} мин. ${s} сек.`;
+    document.getElementById("scoreText").textContent = `Ваш балл: ${score} из 60`;
+
+    const box = document.getElementById("interpretation");
+    
+    // Новая шкала на 30 вопросов (макс 60 баллов)
+    if (score <= 15) {
+        box.textContent = "Минимальный риск. Вы используете социальные сети как инструмент, сохраняя полный контроль над своим временем и вниманием.";
+        box.className = "result-box low";
+    } else if (score <= 30) {
+        box.textContent = "Легкая увлеченность. Соцсети стали привычкой. Иногда вы теряете счет времени, но это пока не вредит учебе и здоровью серьезно. Рекомендуется ограничить время в сети до 2 часов.";
+        box.className = "result-box mild";
+    } else if (score <= 45) {
+        box.textContent = "Средняя зависимость. Виртуальная жизнь начинает доминировать. Вы часто откладываете дела и не высыпаетесь. Пора вводить правила 'цифровой гигиены' и больше общаться офлайн.";
+        box.className = "result-box medium";
+    } else {
+        box.textContent = "Высокая степень зависимости. Социальные сети серьезно влияют на ваше психическое состояние и повседневную жизнь. Рекомендуется устроить цифровой детокс и обратиться за поддержкой к близким или психологу.";
+        box.className = "result-box high";
+    }
+}
+
+function restart() {
+    current = 0; score = 0; totalSeconds = 0;
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+    startTimers();
+    loadQuestion();
+}
+
+startTimers();
+loadQuestion();
+</script>
+</body>
+</html>
